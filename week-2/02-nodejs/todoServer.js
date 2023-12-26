@@ -41,9 +41,89 @@
  */
   const express = require('express');
   const bodyParser = require('body-parser');
-  
-  const app = express();
-  
+  let app=express();
+  let {v4:uuidv4}=require('uuid');
+  let todos=[];
+
   app.use(bodyParser.json());
+
+  app.get('/todos',(req,res)=>{
+    res.status(200).json(todos);
+  })
+
+  app.get('/todos/:id',(req,res)=>{
+    let {id:todoId}=req.params;
+
+    let todo=todos.find((ele)=>{
+      if(ele.id==todoId){
+        return true;
+      }
+      return false;
+    })
+
+    if(todo){
+      res.status(200).json(todo);
+    }
+    else{
+      res.status(404).json("Todo not found");
+    }
+  })
+
+  app.post('/todos',(req,res)=>{
+    let id=uuidv4();
+    let {title,completed,description}=req.body;
+    let reqBody={id,title,completed,description};
+    todos.push(reqBody);
+    res.status(201).json({id});
+  })
+
+  app.put('/todos/:id',(req,res)=>{
+    let {id:todoId}=req.params;
+    let {title,completed}=req.body;
+
+    let ind=todos.findIndex((todo)=>{
+      if(todo.id==todoId){
+        return true;
+      }
+      return false;
+    })
+
+    if(ind>-1){
+    todos[ind].title=title;
+    todos[ind].completed=completed;
+    res.status(200).json("Item found and updated");
+    }else{
+      res.status(404).json("Item not found");
+    }
+  })
+
+  app.delete('/todos/:id',(req,res)=>{
+     let {id:todoId}=req.params;
+      let ind=todos.findIndex((todo)=>{
+        if(todo.id==todoId){
+          return true;
+        }
+        return false;
+      })
+      if(ind>-1){
+        todos=todos.filter((ele)=>{
+          if(ele.id==todoId){
+            return false;
+          }
+          return true;
+        })
+        res.status(200).json("Todo item got deleted succesfully");
+      }else{
+        res.status(404).json("Todo item not found");
+      }
+
+    
+  })
+  app.use('*',(req,res)=>{
+    res.status(404).send("Route not found");
+  })
   
+  app.listen(4000,()=>{
+    console.log("Server listening");
+  })
   module.exports = app;
