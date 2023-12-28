@@ -1,5 +1,3 @@
-const request = require('supertest');
-const assert = require('assert');
 const express = require('express');
 const app = express();
 // You have been given an express server which has a few endpoints.
@@ -14,7 +12,25 @@ const app = express();
 let numberOfRequestsForUser = {};
 setInterval(() => {
     numberOfRequestsForUser = {};
-}, 1000)
+}, 2000)
+
+let rateLimit=(req,res,next)=>{
+  let userId=req.headers["user-id"];
+  if(numberOfRequestsForUser[userId]){
+    numberOfRequestsForUser[userId]++;
+    if(numberOfRequestsForUser[userId]>5){
+      res.status(404).json("Requests limit exceeded");
+      return;
+    }else{
+      next();
+    }
+  }else{
+    numberOfRequestsForUser[userId]=1;
+    next();
+  }
+}
+
+app.use(rateLimit);
 
 app.get('/user', function(req, res) {
   res.status(200).json({ name: 'john' });
@@ -24,4 +40,7 @@ app.post('/user', function(req, res) {
   res.status(200).json({ msg: 'created dummy user' });
 });
 
+app.listen(3000,()=>{
+  console.log("server listening on 3000");
+})
 module.exports = app;
